@@ -77,7 +77,7 @@ export default function LandingPage() {
       );
 
       // URL de Cal.com (Reemplaza 'evolt-colombia/visita' por el tuyo)
-      const calUrl = `https://cal.com/sebastian-sosa-efhl7x/instalacion?name=${nombreCompleto}&notes=${notas}`;
+      const calUrl = `https://cal.com/evolt-co/visita-tecnica?name=${nombreCompleto}&notes=${notas}`;
       
       // 3. ¡Mágia! Redirigimos al calendario
       window.location.href = calUrl;
