@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+@theme {
+
+  --color-brand-green: #37b34a;
+  --color-dark-base: #121212;
+  
+}
+
+:root {
+  background-color: var(--color-dark-base);
+  color: white;
+}
