@@ -160,15 +160,38 @@ const StepSelection = ({ onSelect }) => (
     </div>
   </div>
 );
-    // --- COMPONENTE DEL FORMULARIO DETALLADO (PASO 2) ---
+    // --- Formularaio ---
 const StepForm = ({ serviceType, formData, handleChange, onBack, onSubmit }) => {
   const ciudadesColombia = [
     "Bogotá", "Medellín", "Cali", "Barranquilla", "Cartagena", 
     "Bucaramanga", "Pereira", "Manizales", "Santa Marta", "Ibagué"
   ];
-
   const esInstalacion = serviceType === 'instalacion';
   
+  // --- LÓGICA DE VALIDACIÓN ---
+  const esValido = () => {
+    
+    if (esInstalacion) {
+      // instalación: Nombre, Documento y Referencia
+      return (
+        formData.nombre.trim().length > 2 &&
+        formData.numeroDocumento.trim().length > 5 &&
+        formData.referenciaCotizacion.trim().length > 3
+      );
+    } else {
+      // visita: Nombre, Apellido y Documento
+      return (
+        formData.nombre.trim().length > 2 &&
+        formData.apellido.trim().length > 2 &&
+        formData.numeroDocumento.trim().length > 5 &&
+        formData.telefono.trim().length > 9 &&
+        formData.email.trim().length > 3 &&
+        formData.direccion.trim().length > 3
+      );
+    }
+  };
+
+  const botonActivo = esValido();
 
   return (
     <div className="space-y-6">
@@ -191,11 +214,22 @@ const StepForm = ({ serviceType, formData, handleChange, onBack, onSubmit }) => 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col space-y-1">
               <label className="text-[10px] uppercase font-bold text-gray-500 ml-4 tracking-widest">Nombre</label>
-              <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} className="bg-black/50 border border-white/10 rounded-full px-5 py-3 text-white focus:border-brand-green outline-none" />
+              <input type="text" 
+                      name="nombre" 
+                      value={formData.nombre} 
+                      onChange={handleChange} 
+                      required
+                      className="bg-black/50 border border-white/10 rounded-full px-5 py-3 text-white focus:border-brand-green outline-none" />
             </div>
             <div className="flex flex-col space-y-1">
               <label className="text-[10px] uppercase font-bold text-gray-500 ml-4 tracking-widest">Número de documento</label>
-              <input type="text" name="numeroDocumento" value={formData.numeroDocumento} onChange={handleChange} className="bg-black/50 border border-white/10 rounded-full px-5 py-3 text-white focus:border-brand-green outline-none" />
+              <input type="number" 
+                      name="numeroDocumento" 
+                      value={formData.numeroDocumento} 
+                      onChange={handleChange} 
+                      required
+                      onWheel={(e) => e.target.blur()}
+                      className="bg-black/50 border border-white/10 rounded-full px-5 py-3 text-white focus:border-brand-green outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
             </div>
             
           <div className="col-span-full space-y-6 animate-in slide-in-from-right-4 duration-300 mt-2">
@@ -209,12 +243,14 @@ const StepForm = ({ serviceType, formData, handleChange, onBack, onSubmit }) => 
                 Referencia de Cotización
               </label>
               <input 
-                type="text" 
+                type="number" 
                 name="referenciaCotizacion"
                 value={formData.referenciaCotizacion}
                 onChange={handleChange}
-                placeholder="Ej: EV-2026-001" 
-                className="bg-black/50 border border-white/10 rounded-full px-6 py-4 text-white focus:border-brand-green outline-none transition-all placeholder:text-gray-700" 
+                required
+                onWheel={(e) => e.target.blur()}
+                placeholder="Ej: 2026001" 
+                className="bg-black/50 border border-white/10 rounded-full px-6 py-4 text-white focus:border-brand-green outline-none transition-all placeholder:text-gray-700 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
               />
             </div>
           </div>
@@ -225,15 +261,28 @@ const StepForm = ({ serviceType, formData, handleChange, onBack, onSubmit }) => 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-right-4 duration-300">
             <div className="flex flex-col space-y-1">
               <label className="text-[10px] uppercase font-bold text-gray-500 ml-4 tracking-widest">Nombre</label>
-              <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} className="bg-black/50 border border-white/10 rounded-full px-5 py-3 text-white focus:border-brand-green outline-none" />
+              <input type="text" 
+                      name="nombre" 
+                      value={formData.nombre} 
+                      onChange={handleChange} 
+                      required
+                      className="bg-black/50 border border-white/10 rounded-full px-5 py-3 text-white focus:border-brand-green outline-none" />
             </div>
             <div className="flex flex-col space-y-1">
               <label className="text-[10px] uppercase font-bold text-gray-500 ml-4 tracking-widest">Apellido</label>
-              <input type="text" name="apellido" value={formData.apellido} onChange={handleChange} className="bg-black/50 border border-white/10 rounded-full px-5 py-3 text-white focus:border-brand-green outline-none" />
+              <input type="text" 
+                      name="apellido" 
+                      value={formData.apellido} 
+                      onChange={handleChange} 
+                      required
+                      className="bg-black/50 border border-white/10 rounded-full px-5 py-3 text-white focus:border-brand-green outline-none" />
             </div>
             <div className="flex flex-col space-y-1">
               <label className="text-[10px] uppercase font-bold text-gray-500 ml-4 tracking-widest">Tipo Documento</label>
-              <select name="tipoDocumento" value={formData.tipoDocumento} onChange={handleChange} className="bg-black/50 border border-white/10 rounded-full px-5 py-3 text-white focus:border-brand-green outline-none appearance-none">
+              <select name="tipoDocumento" 
+                      value={formData.tipoDocumento} 
+                      onChange={handleChange} 
+                      className="bg-black/50 border border-white/10 rounded-full px-5 py-3 text-white focus:border-brand-green outline-none appearance-none">
                 <option value="CC">CC</option>
                 <option value="TI">TI</option>
                 <option value="CE">CE</option>
@@ -243,15 +292,32 @@ const StepForm = ({ serviceType, formData, handleChange, onBack, onSubmit }) => 
             </div>
             <div className="flex flex-col space-y-1">
               <label className="text-[10px] uppercase font-bold text-gray-500 ml-4 tracking-widest">Número de Documento</label>
-              <input type="text" name="numeroDocumento" value={formData.numeroDocumento} onChange={handleChange} className="bg-black/50 border border-white/10 rounded-full px-5 py-3 text-white focus:border-brand-green outline-none" />
+              <input type="number" 
+                      name="numeroDocumento" 
+                      value={formData.numeroDocumento} 
+                      onChange={handleChange} 
+                      required
+                      onWheel={(e) => e.target.blur()}
+                      className="bg-black/50 border border-white/10 rounded-full px-5 py-3 text-white focus:border-brand-green outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
             </div>
             <div className="flex flex-col space-y-1">
               <label className="text-[10px] uppercase font-bold text-gray-500 ml-4 tracking-widest">Teléfono</label>
-              <input type="text" name="telefono" value={formData.telefono} onChange={handleChange} className="bg-black/50 border border-white/10 rounded-full px-5 py-3 text-white focus:border-brand-green outline-none" />
+              <input type="number" 
+                      name="telefono" 
+                      value={formData.telefono} 
+                      onChange={handleChange} 
+                      required
+                      onWheel={(e) => e.target.blur()}
+                      className="bg-black/50 border border-white/10 rounded-full px-5 py-3 text-white focus:border-brand-green outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
             </div>
             <div className="flex flex-col space-y-1">
               <label className="text-[10px] uppercase font-bold text-gray-500 ml-4 tracking-widest">Correo Electrónico</label>
-              <input type="text" name="email" value={formData.email} onChange={handleChange} className="bg-black/50 border border-white/10 rounded-full px-5 py-3 text-white focus:border-brand-green outline-none" />
+              <input type="text" 
+                      name="email" 
+                      value={formData.email} 
+                      onChange={handleChange} 
+                      required
+                      className="bg-black/50 border border-white/10 rounded-full px-5 py-3 text-white focus:border-brand-green outline-none" />
             </div>
             <div className="flex flex-col space-y-1">
               <label className="text-[10px] uppercase font-bold text-gray-500 ml-4 tracking-widest">Ubicación</label>
@@ -263,7 +329,12 @@ const StepForm = ({ serviceType, formData, handleChange, onBack, onSubmit }) => 
             </div>
             <div className="flex flex-col space-y-1">
               <label className="text-[10px] uppercase font-bold text-gray-500 ml-4 tracking-widest">Dirección</label>
-              <input type="text" name="direccion" value={formData.direccion} onChange={handleChange} className="bg-black/50 border border-white/10 rounded-full px-5 py-3 text-white focus:border-brand-green outline-none" />
+              <input type="text" 
+                      name="direccion" 
+                      value={formData.direccion} 
+                      onChange={handleChange} 
+                      required
+                      className="bg-black/50 border border-white/10 rounded-full px-5 py-3 text-white focus:border-brand-green outline-none" />
             </div>
             <div className="flex flex-col space-y-1">
               <label className="text-[10px] uppercase font-bold text-gray-500 ml-4 tracking-widest">Ciudad</label>
@@ -280,10 +351,15 @@ const StepForm = ({ serviceType, formData, handleChange, onBack, onSubmit }) => 
 
       {/* Botón Ir al Calendario (Próximo paso: Conectar con Cal.com) */}
       <button 
-        onClick={onSubmit}
-        className="w-full bg-brand-green text-black font-black py-5 rounded-full uppercase text-sm tracking-[0.2em] shadow-xl shadow-brand-green/20 hover:scale-[1.02] active:scale-95 transition-all mt-4"
+        onClick={botonActivo ? onSubmit : null}
+        disabled={!botonActivo}
+        className={`w-full font-black py-5 rounded-full uppercase text-sm tracking-[0.2em] transition-all mt-4 shadow-xl ${
+          botonActivo 
+            ? "bg-brand-green text-black shadow-brand-green/20 hover:scale-[1.02] active:scale-95 cursor-pointer" 
+            : "bg-white/10 text-gray-500 cursor-not-allowed opacity-50 shadow-none"
+        }`}
       >
-        Ir al Calendario
+        {botonActivo ? "Ir al Calendario" : "Completa los campos"}
       </button>
     </div>
   );
@@ -326,6 +402,7 @@ const StepForm = ({ serviceType, formData, handleChange, onBack, onSubmit }) => 
               src="/logo.png" 
               alt="E Volt Logo" 
               className={`transition-all duration-300 ${isScrolled ? 'h-7' : 'h-9'} w-auto`}
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             />
           </div>
 
@@ -359,7 +436,7 @@ const StepForm = ({ serviceType, formData, handleChange, onBack, onSubmit }) => 
 
       
       {/* SECCIÓN HERO */}
-      <section className="relative h-screen w-full flex flex-col overflow-hidden">
+      <section id="inicio" className="relative h-screen w-full flex flex-col overflow-hidden">
         
         {/* IMAGEN DE FONDO */}
         <div 
@@ -371,7 +448,7 @@ const StepForm = ({ serviceType, formData, handleChange, onBack, onSubmit }) => 
         
 
         {/* CONTENIDO CENTRAL DEL HERO */}
-        {/* 'flex-1' obliga a este div a usar TODO el espacio hasta el fondo de la pantalla */}
+
         <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-4">
           
           <h1 className="text-4xl md:text-7xl font-black uppercase leading-[1.2] tracking-tight max-w-5xl">
@@ -524,7 +601,7 @@ const StepForm = ({ serviceType, formData, handleChange, onBack, onSubmit }) => 
 
   </div>
 </section>
-{/* SECCIÓN CONTACTO - VERSIÓN MODERNA PREMIUM */}
+{/* SECCIÓN CONTACTO */}
 <section id="contacto" className="relative z-10 bg-dark-base py-32 px-6 md:px-16">
   <div className="max-w-7xl mx-auto">
     
@@ -582,7 +659,6 @@ const StepForm = ({ serviceType, formData, handleChange, onBack, onSubmit }) => 
         </div>
       </div>
 
-      {/* COLUMNA DERECHA: EL FORMULARIO (Glassmorphism) */}
       <div className="bg-white/5 border border-white/10 p-8 md:p-12 rounded-[2rem] backdrop-blur-sm shadow-2xl">
         <form className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -615,7 +691,7 @@ const StepForm = ({ serviceType, formData, handleChange, onBack, onSubmit }) => 
     </div>
   </div>
 </section>
-{/* FOOTER - EL TOQUE FINAL PROFESIONAL */}
+{/* FOOTER  */}
 <footer className="relative z-10 bg-black pt-20 pb-10 px-6 md:px-16 border-t border-white/5">
   <div className="max-w-7xl mx-auto">
     
@@ -629,6 +705,7 @@ const StepForm = ({ serviceType, formData, handleChange, onBack, onSubmit }) => 
             <img 
               src="/logo.png" 
               alt="E Volt Logo" 
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
               className={`transition-all duration-300 ${isScrolled ? 'h-7' : 'h-9'} w-auto`}
             />
           </div>
