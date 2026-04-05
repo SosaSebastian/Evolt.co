@@ -1,24 +1,11 @@
 "use client";
 import { useState, useEffect } from 'react';
-import Cal from "@calcom/embed-react";
+import Cal, { getCalApi } from "@calcom/embed-react";
 
-export default function LandingPage() {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  
-
-  // Efecto Scroll ---
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   // --- COMPONENTE DEL MODAL (Paso a Paso) ---
   const BookingModal = ({ isOpen, onClose }) => {
-  // Estado para el paso (1: Selección, 2: Formulario)
+  // Estado para el paso (1: Selección, 2: Formulario, 3: Calendario)
   const [step, setStep] = useState(1);
   // Estado para el tipo de servicio
   const [serviceType, setServiceType] = useState(null); 
@@ -31,16 +18,27 @@ export default function LandingPage() {
     numeroDocumento: '',
     tipoLocacion: 'Casa',
     ciudad: 'Bogotá',
-    referenciaCotizacion: ''
+    telefono: '',
+    email: '',
+    direccion: '',
+    referenciaCotizacion: '',
+    trackingId: '' // Guardaremos el ID que viene de la API
   });
+
+  // Configuración inicial de Cal.com (Tema oscuro y UI)
+  useEffect(() => {
+    (async function () {
+      const cal = await getCalApi();
+      cal("ui", { theme: "dark", styles: { branding: { brandColor: "#37b34a" } }, hideEventTypeDetails: false, layout: "month_view" });
+    })();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Si el modal no está abierto, no renderizamos nada
-  if (!isOpen) return null;
+  if (!isOpen) return null; // Si el modal no está abierto, no renderizamos nada
 
   // Función para volver al inicio y limpiar
   const resetAndClose = () => {
@@ -52,61 +50,58 @@ export default function LandingPage() {
   // Redirigir al calendario. 
 
   const handleSubmit = async () => {
-  try {
-    // 1. Enviamos los datos a la API que creamos (POST)
-    const response = await fetch('/api/booking', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...formData,
-        servicio: serviceType // 'visita' o 'instalacion'
-      }),
-    });
+    try {
+      const response = await fetch('/api/booking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          servicio: serviceType
+        }),
+      });
 
-    const result = await response.json();
+      const result = await response.json();
 
     if (result.success) {
-      // 2. Si la API responde OK, preparamos el link de Cal.com
-      const nombreCompleto = encodeURIComponent(`${formData.nombre} ${formData.apellido}`);
+      // 1. Guarda el ID de Seguimiento
+      setFormData(prev => ({ ...prev, trackingId: result.trackingId }));
       
       // Creamos una nota para que el técnico sepa todo antes de ir
-      const notas = encodeURIComponent(
-        `ID Seguimiento: ${result.trackingId} | ` +
-        `Doc: ${formData.tipoDocumento} ${formData.numeroDocumento} | ` +
-        `Locación: ${formData.tipoLocacion} en ${formData.ciudad}`
-      );
-
-      // URL de Cal.com (Reemplaza 'evolt-colombia/visita' por el tuyo)
-      const calUrl = `https://cal.com/evolt-co/visita-tecnica?name=${nombreCompleto}&notes=${notas}`;
-      
-      // 3. ¡Mágia! Redirigimos al calendario
-      window.location.href = calUrl;
-    } else {
-      alert("Error: No pudimos procesar tu solicitud. Intenta de nuevo.");
+      setStep(3); 
+      } else {
+        alert("Error: No pudimos procesar tu solicitud.");
+      }
+    } catch (error) {
+      console.error("Error en el envío:", error);
+      alert("Error de conexión con el servidor.");
     }
-  } catch (error) {
-    console.error("Error en el envío:", error);
-    alert("Error de conexión con el servidor.");
-  }
-};
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       {/* Fondo oscuro con desenfoque */}
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={resetAndClose}></div>
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm cursor-pointer" onClick={resetAndClose}></div>
 
       {/* Tarjeta del Modal */}
-      <div className="relative bg-[#121212] border border-white/10 w-full max-w-lg rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-        
+      <div 
+        className="relative z-[110] bg-[#121212] border border-white/10 w-full max-w-lg rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200"
+        onClick={(e) => e.stopPropagation()}>
+
         {/* Botón X para cerrar */}
-        <button onClick={resetAndClose} className="absolute top-6 right-6 text-gray-500 hover:text-white">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        <button 
+          onClick={resetAndClose} 
+          className="absolute top-6 right-6 z-[120] text-gray-500 hover:text-white transition-colors">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
         </button>
 
-        <div className="p-10">
-          {step === 1 ? (
+      {/* Contenido con scroll interno controlado */}
+        <div className="p-8 md:p-12 max-h-[90vh] overflow-y-auto custom-scrollbar">
+          {step === 1 && (
              <StepSelection onSelect={(type) => { setServiceType(type); setStep(2); }} />
-          ) : (
+          )} 
+          {step === 2 && (
              <StepForm 
                serviceType={serviceType} 
                formData={formData} 
@@ -115,6 +110,29 @@ export default function LandingPage() {
                onSubmit={handleSubmit} // <--- Para redirigir al calendario
              />
           )}
+
+          {/* --- PASO 3: CALENDARIO EMBEBIDO --- */}
+          {step === 3 && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="text-center mb-6">
+                <h3 className="text-xl font-black uppercase tracking-tighter text-brand-green">Selecciona tu horario</h3>
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">ID de Gestión: {formData.trackingId}</p>
+              </div>
+
+              <div className="h-[450px] overflow-y-auto rounded-2xl border border-white/5 bg-black/20">
+                <Cal
+                  calLink={serviceType === 'instalacion' ? "evolt-co/instalacion" : "evolt-co/visita-tecnica"}
+                  style={{ width: "100%", height: "100%" }}
+                  config={{
+                    name: `${formData.nombre} ${formData.apellido}`,
+                    notes: `ID Seg: ${formData.trackingId} | Doc: ${formData.numeroDocumento} | Loc: ${formData.tipoLocacion} | Ciudad: ${formData.ciudad}`,
+                    theme: "dark"
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
     </div>
@@ -157,8 +175,7 @@ const StepForm = ({ serviceType, formData, handleChange, onBack, onSubmit }) => 
       {/* Botón Volver */}
       <button 
         onClick={onBack} 
-        className="text-brand-green text-[10px] font-bold uppercase tracking-[0.2em] flex items-center hover:opacity-70 transition-opacity"
-      >
+        className="text-brand-green text-[10px] font-bold uppercase tracking-[0.2em] flex items-center hover:opacity-70 transition-opacity" >
         <span className="mr-2">←</span> Volver a selección
       </button>
 
@@ -166,15 +183,22 @@ const StepForm = ({ serviceType, formData, handleChange, onBack, onSubmit }) => 
         <h3 className="text-2xl font-black uppercase tracking-tighter mb-1">
           {esInstalacion ? 'Datos de Instalación' : 'Solicitud de Visita'}
         </h3>
-        <p className="text-gray-500 text-[10px] uppercase tracking-widest font-bold">
-          Información obligatoria
-        </p>
       </div>
 
       <div className="space-y-4">
         {esInstalacion ? (
           /* --- FLUJO: INSTALACIÓN --- */
-          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col space-y-1">
+              <label className="text-[10px] uppercase font-bold text-gray-500 ml-4 tracking-widest">Nombre</label>
+              <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} className="bg-black/50 border border-white/10 rounded-full px-5 py-3 text-white focus:border-brand-green outline-none" />
+            </div>
+            <div className="flex flex-col space-y-1">
+              <label className="text-[10px] uppercase font-bold text-gray-500 ml-4 tracking-widest">Número de documento</label>
+              <input type="text" name="numeroDocumento" value={formData.numeroDocumento} onChange={handleChange} className="bg-black/50 border border-white/10 rounded-full px-5 py-3 text-white focus:border-brand-green outline-none" />
+            </div>
+            
+          <div className="col-span-full space-y-6 animate-in slide-in-from-right-4 duration-300 mt-2">
             <div className="bg-brand-green/10 border border-brand-green/20 p-4 rounded-2xl">
               <p className="text-brand-green text-xs font-medium leading-relaxed">
                 ⚠️ Recuerda que para solicitar la instalación debes haber recibido una visita técnica y cotización previa.
@@ -194,6 +218,8 @@ const StepForm = ({ serviceType, formData, handleChange, onBack, onSubmit }) => 
               />
             </div>
           </div>
+      </div>  
+          
         ) : (
           /* --- FLUJO: VISITA TÉCNICA --- */
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-right-4 duration-300">
@@ -216,8 +242,16 @@ const StepForm = ({ serviceType, formData, handleChange, onBack, onSubmit }) => 
               </select>
             </div>
             <div className="flex flex-col space-y-1">
-              <label className="text-[10px] uppercase font-bold text-gray-500 ml-4 tracking-widest">Número</label>
+              <label className="text-[10px] uppercase font-bold text-gray-500 ml-4 tracking-widest">Número de Documento</label>
               <input type="text" name="numeroDocumento" value={formData.numeroDocumento} onChange={handleChange} className="bg-black/50 border border-white/10 rounded-full px-5 py-3 text-white focus:border-brand-green outline-none" />
+            </div>
+            <div className="flex flex-col space-y-1">
+              <label className="text-[10px] uppercase font-bold text-gray-500 ml-4 tracking-widest">Teléfono</label>
+              <input type="text" name="telefono" value={formData.telefono} onChange={handleChange} className="bg-black/50 border border-white/10 rounded-full px-5 py-3 text-white focus:border-brand-green outline-none" />
+            </div>
+            <div className="flex flex-col space-y-1">
+              <label className="text-[10px] uppercase font-bold text-gray-500 ml-4 tracking-widest">Correo Electrónico</label>
+              <input type="text" name="email" value={formData.email} onChange={handleChange} className="bg-black/50 border border-white/10 rounded-full px-5 py-3 text-white focus:border-brand-green outline-none" />
             </div>
             <div className="flex flex-col space-y-1">
               <label className="text-[10px] uppercase font-bold text-gray-500 ml-4 tracking-widest">Ubicación</label>
@@ -226,6 +260,10 @@ const StepForm = ({ serviceType, formData, handleChange, onBack, onSubmit }) => 
                 <option value="Conjunto">Conjunto Residencial</option>
                 <option value="Empresa">Empresa</option>
               </select>
+            </div>
+            <div className="flex flex-col space-y-1">
+              <label className="text-[10px] uppercase font-bold text-gray-500 ml-4 tracking-widest">Dirección</label>
+              <input type="text" name="direccion" value={formData.direccion} onChange={handleChange} className="bg-black/50 border border-white/10 rounded-full px-5 py-3 text-white focus:border-brand-green outline-none" />
             </div>
             <div className="flex flex-col space-y-1">
               <label className="text-[10px] uppercase font-bold text-gray-500 ml-4 tracking-widest">Ciudad</label>
@@ -250,6 +288,20 @@ const StepForm = ({ serviceType, formData, handleChange, onBack, onSubmit }) => 
     </div>
   );
   };
+
+  export default function LandingPage() {
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  
+  // Efecto Scroll ---
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   return (
     <main className="bg-dark-base min-h-screen w-full relative">
 
