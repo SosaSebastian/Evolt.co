@@ -1,31 +1,46 @@
 import { NextResponse } from 'next/server';
+import prisma from '@/lib/prisma'; // 1. Importamos la conexión que creamos en lib/prisma.js
 
-// Esta función maneja las peticiones POST (cuando enviamos datos)
 export async function POST(request) {
   try {
-    // 1. Extraemos los datos que vienen del formulario o de Postman
     const body = await request.json();
     
-    // 2. Aquí es donde procesarías los datos (validar cédula, ciudad, etc.)
-    console.log("--- NUEVA SOLICITUD RECIBIDA ---");
+    console.log("--- SOLICITUD REAL RECIBIDA ---");
     console.log(body);
 
-    // 3. Simulamos la creación de un ID único para E Volt
-    const trackingId = `EV-${Date.now().toString().slice(-6)}`;
+    // 2. Generamos el ID de seguimiento (E Volt style)
+    const trackingId = `EV-${Math.floor(100000 + Math.random() * 900000)}`;
 
-    // 4. Respondemos con éxito y enviamos el ID de seguimiento
+    // 3. 🚀 GUARDADO REAL EN POSTGRESQL
+    // Usamos 'prisma.booking.create' porque en tu schema el modelo se llama 'Booking'
+    const nuevoBooking = await prisma.booking.create({
+      data: {
+        servicio: body.servicio,           // 'visita' o 'instalacion'
+        tracking_id: trackingId,
+        nombre_cliente: body.nombre,
+        // IMPORTANTE: El número de documento debe ir como BigInt para Postgres
+        numero_documento: BigInt(body.numeroDocumento), 
+        ciudad: body.ciudad || "Bogotá",
+        tipo_locacion: body.tipoLocacion || null,
+        referencia_cotizacion: body.referenciaCotizacion || null,
+      }
+    });
+
+    // 4. Respondemos con éxito enviando el ID generado
     return NextResponse.json({
       success: true,
-      message: "Datos de E Volt procesados correctamente",
-      trackingId: trackingId,
+      message: "Agendamiento guardado en base de datos",
+      trackingId: nuevoBooking.tracking_id, // Usamos el ID confirmado por la DB
       nextStep: "cal_com_redirect"
     }, { status: 201 });
 
   } catch (error) {
-    // Si algo sale mal (ej: el JSON está mal escrito), respondemos error
-    return NextResponse.json({ 
-      success: false, 
-      message: "Error en el formato de los datos" 
-    }, { status: 400 });
+    console.error("ERROR AL GUARDAR EN DB:", error);
+    
+    return NextResponse.json({
+      success: false,
+      message: "Error al procesar el agendamiento",
+      details: error.message
+    }, { status: 500 });
   }
 }

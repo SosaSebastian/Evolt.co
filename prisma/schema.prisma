@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 1. TABLA DE TÉCNICOS
+model Tecnico {
+  id_tecnico       Int          @id @default(autoincrement())
+  nombre           String
+  telefono         String?
+  fecha_nacimiento DateTime?
+  certificacion    Boolean      @default(false)
+  
+  // Relaciones (Lado opuesto)
+  bookings         Booking[]    
+  cotizaciones     Cotizacion[] 
+  
+  created_at       DateTime     @default(now())
+
+  @@map("tecnicos")
+}
+
+// 2. TABLA DE AGENDAMIENTOS
+model Booking {
+  id_booking            Int      @id @default(autoincrement())
+  tracking_id           String   @unique
+  servicio              String   
+  nombre_cliente        String
+  numero_documento      BigInt
+  ciudad                String   @default("Bogotá")
+  tipo_locacion         String?  
+  referencia_cotizacion String?  
+
+  tecnico_id            Int?
+  tecnico               Tecnico? @relation(fields: [tecnico_id], references: [id_tecnico])
+
+  // Relación 1 a 1 con Cotización
+  cotizacion_formal     Cotizacion? @relation("BookingToCotizacion")
+
+  created_at            DateTime @default(now())
+  finalizado_at         DateTime?
+
+  @@map("bookings")
+}
+
+// 3. TABLA DE COTIZACIONES
+model Cotizacion {
+  id_cotizacion     Int      @id @default(autoincrement())
+  codigo_cotizacion String   @unique 
+  
+  booking_id        Int      @unique
+  booking           Booking  @relation("BookingToCotizacion", fields: [booking_id], references: [id_booking])
+
+  tecnico_id        Int
+  tecnico           Tecnico  @relation(fields: [tecnico_id], references: [id_tecnico])
+  
+  cumple_retie      Boolean  @default(false)
+  tipo_cargador     String?
+  cableado_metros   Int?
+  requiere_obra     Boolean  @default(false)
+  
+  subtotal          Decimal  @db.Decimal(12, 2)
+  estado            String   @default("pendiente")
+
+  // RELACIÓN FALTANTE: Una cotización puede tener varios pagos (o intentos de pago)
+  pagos             Pago[]
+
+  created_at        DateTime @default(now())
+
+  @@map("cotizaciones")
+}
+
+// 4. TABLA DE PAGOS
+model Pago {
+  id_pago           Int      @id @default(autoincrement())
+  monto             Decimal  @db.Decimal(12, 2)
+  fecha_pago        DateTime @default(now())
+  estado_pago       String   @default("completado") // pendiente, completado, fallido
+
+  // Relación con Cotización
+  cotizacion_id     Int
+  cotizacion        Cotizacion @relation(fields: [cotizacion_id], references: [id_cotizacion])
+
+  // Relación con Medio de Pago
+  id_metodo_pago    Int
+  metodo_pago       MedioPago  @relation(fields: [id_metodo_pago], references: [id_metodo_pago])
+
+  @@map("pagos")
+}
+
+// 5. TABLA DE MEDIOS DE PAGO
+model MedioPago {
+  id_metodo_pago    Int      @id @default(autoincrement())
+  nombre_metodo     String   // PSE, Tarjeta de Crédito, Efectivo
+  descripcion       String?
+
+  // Lado opuesto de la relación con Pago
+  pagos             Pago[]
+
+  @@map("medios_pago")
+}

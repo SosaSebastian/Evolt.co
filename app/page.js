@@ -243,7 +243,7 @@ const StepForm = ({ serviceType, formData, handleChange, onBack, onSubmit }) => 
                 Referencia de Cotización
               </label>
               <input 
-                type="number" 
+                type="text" 
                 name="referenciaCotizacion"
                 value={formData.referenciaCotizacion}
                 onChange={handleChange}
