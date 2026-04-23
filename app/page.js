@@ -3,14 +3,12 @@ import { useState, useEffect } from 'react';
 import Cal, { getCalApi } from "@calcom/embed-react";
 
 
-  // --- COMPONENTE DEL MODAL (Paso a Paso) ---
+  // --- MODAL ---
   const BookingModal = ({ isOpen, onClose }) => {
-  // Estado para el paso (1: Selección, 2: Formulario, 3: Calendario)
   const [step, setStep] = useState(1);
-  // Estado para el tipo de servicio
   const [serviceType, setServiceType] = useState(null); 
   
-  // Paso 1: El "Estado Maestro" de los datos (Lo que definimos antes)
+  // info que se solicita 
   const [formData, setFormData] = useState({
     nombre: '',
     apellido: '',
@@ -22,10 +20,10 @@ import Cal, { getCalApi } from "@calcom/embed-react";
     email: '',
     direccion: '',
     referenciaCotizacion: '',
-    trackingId: '' // Guardaremos el ID que viene de la API
+    trackingId: '' // Id que viene de la API
   });
 
-  // Configuración inicial de Cal.com (Tema oscuro y UI)
+  // Configuración inicial de Cal.com
   useEffect(() => {
     (async function () {
       const cal = await getCalApi();
@@ -38,9 +36,9 @@ import Cal, { getCalApi } from "@calcom/embed-react";
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  if (!isOpen) return null; // Si el modal no está abierto, no renderizamos nada
+  if (!isOpen) return null; // se debe abrir el modal
 
-  // Función para volver al inicio y limpiar
+  // volver al inicio y limpiar
   const resetAndClose = () => {
     setStep(1);
     setServiceType(null);
@@ -65,8 +63,7 @@ import Cal, { getCalApi } from "@calcom/embed-react";
     if (result.success) {
       // 1. Guarda el ID de Seguimiento
       setFormData(prev => ({ ...prev, trackingId: result.trackingId }));
-      
-      // Creamos una nota para que el técnico sepa todo antes de ir
+    
       setStep(3); 
       } else {
         alert("Error: No pudimos procesar tu solicitud.");
@@ -79,7 +76,6 @@ import Cal, { getCalApi } from "@calcom/embed-react";
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Fondo oscuro con desenfoque */}
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm cursor-pointer" onClick={resetAndClose}></div>
 
       {/* Tarjeta del Modal */}
@@ -96,7 +92,7 @@ import Cal, { getCalApi } from "@calcom/embed-react";
           </svg>
         </button>
 
-      {/* Contenido con scroll interno controlado */}
+      {/* scroll interno */}
         <div className="p-8 md:p-12 max-h-[90vh] overflow-y-auto custom-scrollbar">
           {step === 1 && (
              <StepSelection onSelect={(type) => { setServiceType(type); setStep(2); }} />
@@ -111,7 +107,7 @@ import Cal, { getCalApi } from "@calcom/embed-react";
              />
           )}
 
-          {/* --- PASO 3: CALENDARIO EMBEBIDO --- */}
+          {/* --- CALENDARIO --- */}
           {step === 3 && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="text-center mb-6">
@@ -168,18 +164,18 @@ const StepForm = ({ serviceType, formData, handleChange, onBack, onSubmit }) => 
   ];
   const esInstalacion = serviceType === 'instalacion';
   
-  // --- LÓGICA DE VALIDACIÓN ---
+  // --- VALIDACIÓN ---
   const esValido = () => {
     
     if (esInstalacion) {
-      // instalación: Nombre, Documento y Referencia
+      // instalación: 
       return (
         formData.nombre.trim().length > 2 &&
         formData.numeroDocumento.trim().length > 5 &&
         formData.referenciaCotizacion.trim().length > 3
       );
     } else {
-      // visita: Nombre, Apellido y Documento
+      // visita: 
       return (
         formData.nombre.trim().length > 2 &&
         formData.apellido.trim().length > 2 &&
@@ -210,7 +206,7 @@ const StepForm = ({ serviceType, formData, handleChange, onBack, onSubmit }) => 
 
       <div className="space-y-4">
         {esInstalacion ? (
-          /* --- FLUJO: INSTALACIÓN --- */
+          /* --- flujo de instalación --- */
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col space-y-1">
               <label className="text-[10px] uppercase font-bold text-gray-500 ml-4 tracking-widest">Nombre</label>
@@ -430,7 +426,6 @@ const StepForm = ({ serviceType, formData, handleChange, onBack, onSubmit }) => 
         </div>
       </nav>
 
-      {/* --- IMPORTANTE: ESPACIADOR --- */}
       {/* Como el navbar es 'fixed', este div evita que el Hero se meta debajo del navbar al inicio */}
       <div className="h-[80px] md:h-[90px] bg-black"></div>
 
@@ -498,7 +493,7 @@ const StepForm = ({ serviceType, formData, handleChange, onBack, onSubmit }) => 
       </div>
     </div>
 
-    {/* COLUMNA DERECHA: TEXTO (Con el estilo premium de E Volt) */}
+    {/* COLUMNA DERECHA: TEXTO  */}
     <div className="flex flex-col space-y-8">
       <div>
         <p className="text-brand-green font-bold text-xs uppercase tracking-[0.3em] mb-4">
